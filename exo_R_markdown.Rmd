@@ -1,0 +1,107 @@
+---
+author: "John East"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+```{r include = FALSE}
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+Sys.Date()
+
+# Loading Exoplanet Data
+pl_data <- read_csv("planets.csv", n_max = 500)
+
+# Selecting Columns
+pl_data_clean_1 <- pl_data %>%
+  select(pl_name, hostname, discoverymethod, disc_year, disc_facility, pl_bmassj)
+
+# Discovery Plot
+pl_exo <- ggplot(pl_data_clean_1, aes(x =disc_year, pl_bmassj, color = discoverymethod)) +
+      geom_point(position = "jitter", alpha = 0.5, size = 2) +
+      scale_y_log10() +
+      ggtitle("ExoPlanet discovered by mass over years") +
+      labs(color = "Discovery Method") +
+      xlab("Discovery Year") +
+      ylab("Planet Mass")
+
+
+# Facility plot  
+fl_exo <- ggplot(pl_data_clean_1, aes(disc_facility, fill = disc_facility)) + geom_bar()
+
+fl_exo_plot <- fl_exo + coord_flip() + theme_bw() + labs(title = "Number of ExoPlanets Discovered by Facility", x = "Facility", y = "Count") + theme(legend.position = "none")
+
+# K2 filter for number of Discoveries
+K2_fac <- pl_data_clean_1 %>%
+            filter(disc_facility == "K2") %>%
+            count(disc_facility)
+
+# CoRoT Filter for number of discoveries
+CoRoT <- pl_data_clean_1 %>%
+            filter(disc_facility == "CoRoT") %>%
+            count(disc_facility)
+```
+
+# EXOPLANET DISCOVERIES
+
+### Summary
+Data was taken from [NASA's ExoPlanet Archive](https://exoplanetarchive.ipac.caltech.edu/cgi-bin/TblView/nph-tblView?app=ExoTbls&config=PS). Below is a plot of all planets discovered from 1995-2021 by mass, colored by their Discovery Method.
+
+```{r warning = FALSE, echo = FALSE, fig.align = "center", fig.width = 10, fig.height = 5}
+pl_exo + theme_bw()
+```
+
+
+
+### Number of ExoPlanets discovered by facility
+This is the number of Exoplanets discovered by facility.You can see that K2 has the most number of Discoveries at `r K2_fac$n` and CoRoT right behind it at `r CoRoT$n`.
+
+```{r warning = FALSE, echo = FALSE, fig.width = 10, fig.height = 5}
+fl_exo_plot
+```
+
+
+
+```{r warning = FALSE, echo = FALSE}
+
+pl_data_clean_2 <- pl_data_clean_1 %>%
+  filter(pl_bmassj > 10.00)
+
+count_mass <- count(pl_data_clean_2, pl_bmassj, sort = TRUE)
+
+number <- length(count_mass$pl_bmassj)
+
+```
+
+### Exoplants with mass greater than 10
+These are the `r number` Exoplanets with a mass greater than 10.
+```{r warning = FALSE, echo = FALSE, fig.align = "center", fig.width = 10, fig.height = 5}
+
+ggplot(pl_data_clean_1, aes(log(pl_bmassj), fill = discoverymethod)) +
+  geom_density(alpha = 0.3, bandwidth = 5) +
+  theme_bw() +
+  ggtitle("ExoPlanets with mass greater than 10") +
+  labs(color = "Discovery Method") +
+  xlab("Planets Mass (Log)") +
+  ylab("Count")
+  
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
